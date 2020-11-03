@@ -198,6 +198,42 @@ describe("option-manager", () => {
       expect(calls1).toEqual([{ arg: 1 }, { arg: 3 }]);
       expect(calls2).toEqual([{ arg: 2 }]);
     });
+
+    it("should override a plugin from a previous preset", () => {
+      const { calls, plugin } = makePlugin();
+
+      const makePreset = () => (api, opts) => ({
+        plugins: [[plugin, opts]],
+      });
+
+      loadOptions({
+        presets: [
+          [makePreset(), { arg: 1 }],
+          [makePreset(), { arg: 2 }],
+        ],
+      });
+      expect(calls).toEqual([{ arg: 2 }]);
+    });
+
+    it("should override a plugin from a previous nested preset", () => {
+      const { calls, plugin } = makePlugin();
+
+      const preset = (api, opts) => ({
+        plugins: [[plugin, opts]],
+      });
+
+      const outerPreset = (api, opts) => ({
+        presets: [[preset, opts]],
+      });
+
+      loadOptions({
+        presets: [
+          [outerPreset, { arg: 1 }],
+          [preset, { arg: 2 }],
+        ],
+      });
+      expect(calls).toEqual([{ arg: 2 }]);
+    });
   });
 
   describe("mergeOptions", () => {
